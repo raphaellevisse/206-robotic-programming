@@ -133,6 +133,7 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/cc/ee106a/fa23/class/ee106a-adz/ros_workspaces/lab2/build/gtest/cmake_install.cmake")
   include("/home/cc/ee106a/fa23/class/ee106a-adz/ros_workspaces/lab2/build/chatter/cmake_install.cmake")
   include("/home/cc/ee106a/fa23/class/ee106a-adz/ros_workspaces/lab2/build/my_chatter/cmake_install.cmake")
+  include("/home/cc/ee106a/fa23/class/ee106a-adz/ros_workspaces/lab2/build/lab2_turtlesim/cmake_install.cmake")
   include("/home/cc/ee106a/fa23/class/ee106a-adz/ros_workspaces/lab2/build/turtle_patrol/cmake_install.cmake")
 
 endif()

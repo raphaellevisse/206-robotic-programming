@@ -5,27 +5,28 @@ import rospy
 from std_srvs.srv import Empty
 from turtle_patrol.srv import Patrol  # Service type
 from turtlesim.srv import TeleportAbsolute
-
+import sys
 
 def patrol_callback(request):
+
     rospy.wait_for_service('clear')
-    rospy.wait_for_service('/turtle1/teleport_absolute')
+    rospy.wait_for_service(f'/{sys.argv[1]}/teleport_absolute')
     clear_proxy = rospy.ServiceProxy('clear', Empty)
     teleport_proxy = rospy.ServiceProxy(
-        '/turtle1/teleport_absolute',
+        f'/{sys.argv[1]}/teleport_absolute',
         TeleportAbsolute
     )
     vel = request.vel  # Linear velocity
     omega = request.omega  # Angular velocity
     pub = rospy.Publisher(
-        '/turtle1/cmd_vel', Twist, queue_size=50)
+        f'/{sys.argv[1]}/cmd_vel', Twist, queue_size=50)
     cmd = Twist()
     cmd.linear.x = vel
     cmd.angular.z = omega
     # Publish to cmd_vel at 5 Hz
     rate = rospy.Rate(5)
     # Teleport to initial pose
-    teleport_proxy(9, 5, np.pi/2)
+    teleport_proxy(request.x, request.y, request.theta)
     # Clear historical path traces
     clear_proxy()
     while not rospy.is_shutdown():
@@ -33,12 +34,12 @@ def patrol_callback(request):
         rate.sleep()  # Sleep until 
     return cmd  # This line will never be reached
 
-def patrol_server():
-    # Initialize the server node for turtle1
-    rospy.init_node('turtle1_patrol_server')
+def patrol_server(turtle_name):
+    # Initialize the server node for {turtle_name}
+    rospy.init_node(f'{turtle_name}_patrol_server')
     # Register service
     rospy.Service(
-        '/turtle1/patrol',  # Service name
+        f'/{turtle_name}/patrol',  # Service name
         Patrol,  # Service type
         patrol_callback  # Service callback
     )
@@ -47,5 +48,5 @@ def patrol_server():
 
 
 if __name__ == '__main__':
-    patrol_server()
+    patrol_server(sys.argv[1])
 

@@ -7,4 +7,5 @@
 subdirs("gtest")
 subdirs("chatter")
 subdirs("my_chatter")
+subdirs("lab2_turtlesim")
 subdirs("turtle_patrol")
