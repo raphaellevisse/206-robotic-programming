@@ -44,54 +44,85 @@ class OccupancyGrid2d(object):
         return True
 
     def LoadParameters(self):
-        # Random downsampling fraction, i.e. only keep this fraction of rays.
-        if not rospy.has_param("~random_downsample"):
-            return False
-        self._random_downsample = rospy.get_param("~random_downsample")
+        # Random downsampling fraction, i.e., only keep this fraction of rays.
+        if rospy.has_param("~random_downsample"):
+            self._random_downsample = rospy.get_param("~random_downsample")
+        else:
+            return False  # Return False if the parameter is not set.
 
-        # Dimensions and bounds.
-        # TODO! You'll need to set values for class variables called:
-        # -- self._x_num
-        # -- self._x_min
-        # -- self._x_max
-        # -- self._x_res # The resolution in x. Note: This isn't a ROS parameter. What will you do instead?
-        # -- self._y_num
-        # -- self._y_min
-        # -- self._y_max
-        # -- self._y_res # The resolution in y. Note: This isn't a ROS parameter. What will you do instead?
+        if rospy.has_param("~x/num"):
+            self._x_num = rospy.get_param("~x/num")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~x/min"):
+            self._x_min = rospy.get_param("~x/min")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~x/max"):
+            self._x_max = rospy.get_param("~x/max")
+        else:
+            return False  # Return False if the parameter is not set.
+
+        # Calculate resolution in x based on the provided parameters.
+        self._x_res = (self._x_max - self._x_min) / self._x_num
+
+        if rospy.has_param("~y/num"):
+            self._y_num = rospy.get_param("~y/num")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~y/min"):
+            self._y_min = rospy.get_param("~y/min")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~y/max"):
+            self._y_max = rospy.get_param("~y/max")
+        else:
+            return False  # Return False if the parameter is not set.
+
+        # Calculate resolution in y based on the provided parameters.
+        self._y_res = (self._y_max - self._y_min) / self._y_num
 
         # Update parameters.
-        if not rospy.has_param("~update/occupied"):
-            return False
-        self._occupied_update = self.ProbabilityToLogOdds(
-            rospy.get_param("~update/occupied"))
-
-        if not rospy.has_param("~update/occupied_threshold"):
-            return False
-        self._occupied_threshold = self.ProbabilityToLogOdds(
-            rospy.get_param("~update/occupied_threshold"))
-
-        if not rospy.has_param("~update/free"):
-            return False
-        self._free_update = self.ProbabilityToLogOdds(
-            rospy.get_param("~update/free"))
-
-        if not rospy.has_param("~update/free_threshold"):
-            return False
-        self._free_threshold = self.ProbabilityToLogOdds(
-            rospy.get_param("~update/free_threshold"))
+        if rospy.has_param("~update/occupied"):
+            self._occupied_update = self.ProbabilityToLogOdds(rospy.get_param("~update/occupied"))
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~update/occupied_threshold"):
+            self._occupied_threshold = self.ProbabilityToLogOdds(rospy.get_param("~update/occupied_threshold"))
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~update/free"):
+            self._free_update = self.ProbabilityToLogOdds(rospy.get_param("~update/free"))
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~update/free_threshold"):
+            self._free_threshold = self.ProbabilityToLogOdds(rospy.get_param("~update/free_threshold"))
+        else:
+            return False  # Return False if the parameter is not set.
 
         # Topics.
-        # TODO! You'll need to set values for class variables called:
-        # -- self._sensor_topic
-        # -- self._vis_topic
+        if rospy.has_param("~topics/sensor"):
+            self._sensor_topic = rospy.get_param("~topics/sensor")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~topics/vis"):
+            self._vis_topic = rospy.get_param("~topics/vis")
+        else:
+            return False  # Return False if the parameter is not set.
 
         # Frames.
-        # TODO! You'll need to set values for class variables called:
-        # -- self._sensor_frame
-        # -- self._fixed_frame
+        if rospy.has_param("~frames/sensor"):
+            self._sensor_frame = rospy.get_param("~frames/sensor")
+        else:
+            return False  # Return False if the parameter is not set.
+        if rospy.has_param("~frames/fixed"):
+            self._fixed_frame = rospy.get_param("~frames/fixed")
+        else:
+            return False  # Return False if the parameter is not set.
 
         return True
+
+
 
     def RegisterCallbacks(self):
         # Subscriber.
@@ -147,6 +178,7 @@ class OccupancyGrid2d(object):
 
             # Get angle of this ray in fixed frame.
             # TODO!
+            fixed_frame_angle = yaw + msg.angle_min + msg.angle_increment*idx
 
             # Throw out this point if it is too close or too far away.
             if r > msg.range_max:
@@ -163,6 +195,33 @@ class OccupancyGrid2d(object):
             # Only update each voxel once. 
             # The occupancy grid is stored in self._map
             # TODO!
+            x =sensor_x
+            y = sensor_y
+            ray_x = np.linspace(x,x+np.cos(fixed_frame_angle)*r,100)
+            ray_y = np.linspace(y,y+np.sin(fixed_frame_angle)*r,100)
+            grid_array = []
+            for i in range(len(ray_x)):
+                grid = self.PointToVoxel(ray_x[i], ray_y[i])
+                if grid not in grid_array:
+                    grid_array.append(grid)
+            if (len(grid_array)==0):
+                continue
+
+            for false_grid in grid_array[:-1]:
+                ii,jj = false_grid 
+                delta_free = self._free_update
+                self._map[ii,jj] += delta_free
+                if self._map[ii,jj] <= self._free_threshold:
+                    self._map[ii,jj] = self._free_threshold
+            
+            last_grid = grid_array[-1]
+            ii,jj = last_grid
+            delta_ocp = self._occupied_update
+            self._map[ii,jj] += delta_ocp
+            if self._map[ii,jj] >= self._occupied_threshold:
+                self._map[ii,jj] =  self._occupied_threshold
+            
+            
 
         # Visualize.
         self.Visualize()
