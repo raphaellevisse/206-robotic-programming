@@ -21,7 +21,7 @@ def main():
         request.ik_request.group_name = "right_arm"
 
         # If a Sawyer does not have a gripper, replace '_gripper_tip' with '_wrist' instead
-        link = "stp_022310TP99495_tip"
+        link = "right_gripper_tip"
 
         request.ik_request.ik_link_name = link
         # request.ik_request.attempts = 20
@@ -49,7 +49,7 @@ def main():
 
             # TRY THIS
             # Setting just the position without specifying the orientation
-            ###group.set_position_target([0.5, 0.5, 0.0])
+            group.set_position_target([0.5, 0.5, 0.0])
 
             # Plan IK
             plan = group.plan()
