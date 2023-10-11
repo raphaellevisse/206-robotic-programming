@@ -16,9 +16,17 @@ def ik_service_client():
     pose_stamped.header = header
 
     # Set end effector position: YOUR CODE HERE
-    
+    x = float(input("x :", ))
+    y = float(input("y :", ))
+    z = float(input("z :", )) 
+    pose_stamped.pose.position.x = x 
+    pose_stamped.pose.position.y = y
+    pose_stamped.pose.position.z = z
     # Set end effector quaternion: YOUR CODE HERE
-
+    pose_stamped.pose.orientation.x = 0
+    pose_stamped.pose.orientation.y = 1
+    pose_stamped.pose.orientation.z = 0
+    pose_stamped.pose.orientation.w = 0
     # Add desired pose for inverse kinematics
     ik_request.pose_stamp.append(pose_stamped)
     # Request inverse kinematics from base to "right_hand" link

@@ -13,7 +13,7 @@ def fk_service_client():
     joints = JointState()
     # YOUR CODE HERE
     joints.name = ['right_j0', 'right_j1', 'right_j2', 'right_j3','right_j4', 'right_j5', 'right_j6']
-    joint_input = []
+    joint_input = [float(i) for i in input("comma sepatated values:" ).split(",")]
     joints.position = joint_input
     # Add desired pose for forward kinematics
     fk_request.configuration.append(joints)
@@ -23,6 +23,7 @@ def fk_service_client():
     try:
         rospy.wait_for_service(service_name, 5.0)
         response = fk_service_proxy(fk_request)
+        print(response.pose_stamp[0].pose.position)
     except (rospy.ServiceException, rospy.ROSException) as e:
         rospy.logerr("Service call failed: %s" % (e,))
         return 
