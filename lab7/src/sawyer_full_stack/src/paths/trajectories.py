@@ -180,15 +180,16 @@ class LinearTrajectory(Trajectory):
         7x' :obj:`numpy.ndarray`
             desired configuration in workspace coordinates of the end effector
         """
+        ht =  self.total_time/2
+
         if time <= self.total_time / 2.0:
-            # TODO: calculate the position of the end effector at time t, 
-            # For the first half of the trajectory, maintain a constant acceleration
-            pos = ...
+            
+            pos = self.start_position + 1/2*self.acceleration*time**2
         else:
-            # TODO: Calculate the position of the end effector at time t, 
-            # For the second half of the trajectory, maintain a constant acceleration
-            # Hint: Calculate the remaining distance to the goal position. 
-            pos = ...
+            t = time - ht
+            middle = (self.goal_position + self.start_position)/2
+            pos = -1/2*self.acceleration*t**2 + self.v_max*t + middle
+
         return np.hstack((pos, self.desired_orientation))
 
     def target_velocity(self, time):
@@ -213,14 +214,16 @@ class LinearTrajectory(Trajectory):
             # TODO: calculate velocity using the acceleration and time
             # For the first half of the trajectory, we maintain a constant acceleration
 
-            
-            linear_vel = ...
+            tf = self.total_time
+            v_max = self.v_max
+            linear_vel = v_max*(time/(tf/2))
         else:
             # TODO: start slowing the velocity down from the maximum one
             # For the second half of the trajectory, maintain a constant deceleration
-
-
-            linear_vel = ...
+            tf = self.total_time
+            v_max = self.v_max
+            ht = tf/2
+            linear_vel = v_max - v_max*((time-ht)/(tf/2))
         return np.hstack((linear_vel, np.zeros(3)))
 
 class CircularTrajectory(Trajectory):
@@ -255,16 +258,19 @@ class CircularTrajectory(Trajectory):
         if time <= self.total_time / 2.0:
             # TODO: calculate the ANGLE of the end effector at time t, 
             # For the first half of the trajectory, maintain a constant acceleration
-            
-
-            theta = ...
+            t = time
+            a = self.angular_acceleration
+            theta = (1/2)*(t**2) * a
         else:
             # TODO: Calculate the ANGLE of the end effector at time t, 
             # For the second half of the trajectory, maintain a constant acceleration
             # Hint: Calculate the remaining angle to the goal position. 
-
-
-            theta = ...
+            a = self.angular_acceleration
+            t = time
+            ht = self.total_time/2
+            v_max = self.angular_v_max
+            mid = (1/2)*(ht**2) * a
+            theta = -(1/2)*((t-ht)**2)*a + v_max*(t-ht) + mid
         pos_d = np.ndarray.flatten(self.center_position + self.radius * np.array([np.cos(theta), np.sin(theta), 0]))
         return np.hstack((pos_d, self.desired_orientation))
 
@@ -287,20 +293,25 @@ class CircularTrajectory(Trajectory):
         6x' :obj:`numpy.ndarray`
             desired body-frame velocity of the end effector
         """
+        t_half = self.total_time / 2.0
         if time <= self.total_time / 2.0:
             # TODO: calculate ANGULAR position and velocity using the acceleration and time
             # For the first half of the trajectory, we maintain a constant acceleration
 
 
-            theta = ...
-            theta_dot = ...
+
+
+            theta = 0.5 * self.angular_acceleration * time ** 2
+            theta_dot = self.angular_acceleration * time
         else:
             # TODO: start slowing the ANGULAR velocity down from the maximum one
             # For the second half of the trajectory, maintain a constant deceleration
             
-            
-            theta = ...
-            theta_dot = ...
+            a = self.angular_acceleration
+            v_max = self.angular_v_max
+            mid = 0.5 * (t_half ** 2) * a
+            theta = -0.5 * a * (time - t_half) ** 2 + v_max * (time - t_half) + mid
+            theta_dot = -a * (time - t_half) + v_max
         vel_d = np.ndarray.flatten(self.radius * theta_dot * np.array([-np.sin(theta), np.cos(theta), 0]))
         return np.hstack((vel_d, np.zeros(3)))
 
@@ -311,6 +322,6 @@ if __name__ == '__main__':
     animate function to visualize the full trajectory in a 3D plot.
     """
 
-    path = LinearTrajectory(np.array([0, 0, 0]), np.array([.1, .1, .1]), 10)
-    # path = CircularTrajectory(np.array([0.2, 0.4, 0.6]), .3, 10)
+    #path = LinearTrajectory(np.array([0, 0, 0]), np.array([.1, .1, .1]), 10)
+    path = CircularTrajectory(np.array([0.2, 0.4, 0.6]), .3, 10)
     path.display_trajectory()
