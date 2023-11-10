@@ -449,10 +449,7 @@ class PIDJointVelocityController(Controller):
         current_velocity = get_joint_velocities(self._limb)
         
         # TODO: implement PID control to set the joint velocities. 
-
-
-
-
-        controller_velocity = ...
+        
+        controller_velocity = target_velocity + self.Kp.dot(target_position - current_position) + self.Ki.dot(self.integ_error) + self.Kd.dot(target_velocity - current_velocity)
 
         self._limb.set_joint_velocities(joint_array_to_dict(controller_velocity, self._limb))
