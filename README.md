@@ -1,2 +1,3 @@
-# 106a-fa23-labs-starter
-Starter code for EECS 106A Fall 23 labs.
+# EECS 106 Robotic Programming
+
+Here are my ROS answers to the programming challenges given. Feel free to look around
